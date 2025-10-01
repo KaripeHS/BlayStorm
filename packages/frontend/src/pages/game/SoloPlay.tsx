@@ -607,7 +607,7 @@ export default function SoloPlay() {
       {/* Daily Quests Panel */}
       <div className="fixed top-20 right-4 z-40">
         <DailyQuests
-          quests={quests}
+          quests={quests as any}
           onClaimReward={handleClaimQuest}
         />
       </div>
@@ -615,7 +615,7 @@ export default function SoloPlay() {
       {/* Pet Companion */}
       {currentPet && (
         <PetCompanion
-          pet={currentPet}
+          pet={currentPet as any}
           onFeed={handleFeedPet}
           onPlay={handlePlayWithPet}
         />

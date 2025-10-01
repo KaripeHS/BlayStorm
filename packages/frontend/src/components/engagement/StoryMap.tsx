@@ -72,14 +72,14 @@ export const StoryMap: React.FC<StoryMapProps> = ({
 
         {!selectedWorld ? (
           /* World Selection View */
-          <WorldSelection worlds={worlds} onSelectWorld={onSelectWorld} />
+          <WorldSelection worlds={worlds} onSelectWorld={onSelectWorld || (() => {})} />
         ) : (
           /* Chapter Map View */
           <ChapterMap
             world={selectedWorld}
             chapters={chapters}
-            onBack={() => onSelectWorld(null as any)}
-            onStartChapter={onStartChapter}
+            onBack={() => onSelectWorld && onSelectWorld(null as any)}
+            onStartChapter={handleChapterClick}
           />
         )}
       </div>

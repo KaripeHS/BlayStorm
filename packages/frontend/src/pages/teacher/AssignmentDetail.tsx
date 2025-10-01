@@ -90,7 +90,7 @@ export default function AssignmentDetail() {
     if (!confirm('Publish this assignment to all students in the classroom?')) return;
 
     try {
-      await api.post(`/teacher/assignments/${id}/publish`);
+      await api.post(`/teacher/assignments/${id}/publish`) as any;
       await loadAssignmentData();
       alert('Assignment published successfully!');
     } catch (error) {

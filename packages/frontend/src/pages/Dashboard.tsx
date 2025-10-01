@@ -76,7 +76,7 @@ const Dashboard = () => {
       happiness: pet.happiness
     } : null,
     dailyQuestProgress: {
-      completed: quests.filter(q => q.progress >= q.target).length,
+      completed: quests.filter(q => (q.progress ?? q.currentProgress ?? 0) >= (q.target ?? q.targetValue ?? 0)).length,
       total: quests.length
     },
     battlePassLevel: battlePassData?.currentLevel || 0,
@@ -465,7 +465,9 @@ const Dashboard = () => {
 
           <div className="grid grid-cols-3 gap-4">
             {quests.slice(0, 3).map((quest, index) => {
-              const isCompleted = quest.progress >= quest.target;
+              const progress = quest.progress ?? quest.currentProgress ?? 0;
+              const target = quest.target ?? quest.targetValue ?? 0;
+              const isCompleted = progress >= target;
               return (
                 <div key={quest.id} className="bg-white/10 rounded-xl p-4">
                   <div className="flex items-center justify-between mb-2">
@@ -475,11 +477,11 @@ const Dashboard = () => {
                   <div className="relative w-full h-3 bg-black/30 rounded-full overflow-hidden mb-2">
                     <div
                       className="absolute inset-y-0 left-0 bg-gradient-to-r from-green-400 to-blue-400 rounded-full"
-                      style={{ width: `${(quest.progress / quest.target) * 100}%` }}
+                      style={{ width: `${(progress / target) * 100}%` }}
                     />
                   </div>
                   <div className="flex items-center justify-between text-xs">
-                    <span className="text-white/60">{quest.progress} / {quest.target}</span>
+                    <span className="text-white/60">{progress} / {target}</span>
                     <span className="text-yellow-400 font-bold">
                       {quest.coinReward} 🪙 {quest.gemReward > 0 && `+ ${quest.gemReward} 💎`}
                     </span>
