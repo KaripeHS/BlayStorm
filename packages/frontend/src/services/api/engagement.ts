@@ -1,4 +1,13 @@
 import apiClient from './client';
+import type {
+  ItemCategory,
+  ShopItemCategory,
+  RewardType,
+  ChallengeStatus,
+  FurnitureCategory,
+  QuestType,
+  QuestDifficulty
+} from '../../types/engagement';
 
 // ========================================
 // TYPE DEFINITIONS
@@ -8,6 +17,10 @@ export interface Quest {
   id: string;
   name: string;
   description: string;
+  type: QuestType;
+  difficulty: QuestDifficulty;
+  targetValue: number;
+  currentProgress: number;
   progress: number;
   target: number;
   coinReward: number;
@@ -22,9 +35,14 @@ export interface Pet {
   name: string;
   emoji: string;
   level: number;
+  xp: number;
   currentXp: number;
+  xpToNextLevel: number;
   xpForNextLevel: number;
   happiness: number;
+  imageUrl: string;
+  baseAbility: string;
+  abilityValue: number;
   bonusType: string;
   bonusValue: number;
   lastFed?: Date;
@@ -41,7 +59,7 @@ export interface ComboData {
 export interface AvatarItem {
   id: string;
   name: string;
-  category: string;
+  category: ItemCategory;
   rarity: string;
   imageUrl: string;
   coinsCost: number;
@@ -55,7 +73,8 @@ export interface ShopItem {
   id: string;
   name: string;
   description: string;
-  category: string;
+  category: ShopItemCategory;
+  type: ShopItemCategory;
   rarity: string;
   imageUrl: string;
   coinsCost: number;
@@ -93,7 +112,7 @@ export interface BattlePassReward {
   id: string;
   level: number;
   tier: 'FREE' | 'PREMIUM';
-  type: string;
+  type: RewardType;
   name: string;
   description: string;
   imageUrl: string;
@@ -141,7 +160,7 @@ export interface Challenge {
   opponentName: string;
   opponentLevel: number;
   opponentAvatar?: string;
-  status: string;
+  status: ChallengeStatus;
   topic: string;
   problemCount: number;
   timeLimit: number;
@@ -157,7 +176,7 @@ export interface Challenge {
 export interface FurnitureItem {
   id: string;
   name: string;
-  category: string;
+  category: FurnitureCategory;
   rarity: string;
   imageUrl: string;
   coinsCost: number;
@@ -182,11 +201,16 @@ export interface World {
   description: string;
   icon: string;
   order: number;
+  requiredLevel: number;
+  theme: string;
+  isUnlocked: boolean;
   isLocked: boolean;
+  chaptersCompleted: number;
   completedChapters: number;
   totalChapters: number;
   stars: number;
   maxStars: number;
+  imageUrl: string;
 }
 
 export interface Chapter {

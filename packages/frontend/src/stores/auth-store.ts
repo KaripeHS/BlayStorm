@@ -4,6 +4,7 @@ import apiClient from '../lib/api-client';
 interface User {
   id: string;
   email: string;
+  username?: string; // Added for compatibility
   role: string;
   profile: any;
   studentProfile?: any;

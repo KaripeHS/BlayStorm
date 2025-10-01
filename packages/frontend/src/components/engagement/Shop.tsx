@@ -197,7 +197,7 @@ const ShopItemCard: React.FC<ShopItemCardProps> = ({ item, studentLevel, onSelec
     MYTHIC: 'from-red-500 to-pink-500',
   };
 
-  const isLocked = item.requiredLevel && studentLevel < item.requiredLevel;
+  const isLocked = !!(item.requiredLevel && studentLevel < item.requiredLevel);
   const bgGradient = rarityColors[item.rarity];
 
   return (

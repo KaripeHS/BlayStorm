@@ -9,6 +9,7 @@ interface Problem {
   difficulty: number;
   choices?: string[];
   hints: string[];
+  estimatedTime?: number;
 }
 
 interface GameState {

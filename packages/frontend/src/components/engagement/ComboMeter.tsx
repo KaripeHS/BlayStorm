@@ -3,18 +3,21 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Flame, Zap } from 'lucide-react';
 
 interface ComboMeterProps {
-  combo: number;
+  combo?: number;
+  currentCombo?: number;
   maxCombo: number;
   multiplier: number;
   onBreak?: () => void;
 }
 
 export const ComboMeter: React.FC<ComboMeterProps> = ({
-  combo,
+  combo: comboProp,
+  currentCombo,
   maxCombo,
   multiplier,
   onBreak,
 }) => {
+  const combo = comboProp ?? currentCombo ?? 0;
   const [prevCombo, setPrevCombo] = useState(combo);
   const [showMilestone, setShowMilestone] = useState(false);
 
