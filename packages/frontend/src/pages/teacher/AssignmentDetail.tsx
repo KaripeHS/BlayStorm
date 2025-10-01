@@ -70,8 +70,8 @@ export default function AssignmentDetail() {
   const loadAssignmentData = async () => {
     try {
       const [assignmentRes, statsRes] = await Promise.all([
-        api.get(`/teacher/assignments/${id}`),
-        api.get(`/teacher/assignments/${id}/stats`),
+        api.get(`/teacher/assignments/${id}`) as any,
+        api.get(`/teacher/assignments/${id}/stats`) as any,
       ]);
 
       setAssignment(assignmentRes.data);

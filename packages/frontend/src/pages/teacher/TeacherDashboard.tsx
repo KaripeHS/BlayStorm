@@ -42,8 +42,8 @@ export default function TeacherDashboard() {
   const loadDashboardData = async () => {
     try {
       const [classroomsRes, assignmentsRes] = await Promise.all([
-        api.get('/teacher/classrooms'),
-        api.get('/teacher/assignments?limit=5'),
+        api.get('/teacher/classrooms') as any,
+        api.get('/teacher/assignments?limit=5') as any,
       ]);
       setClassrooms(classroomsRes.data);
       setRecentAssignments(assignmentsRes.data);

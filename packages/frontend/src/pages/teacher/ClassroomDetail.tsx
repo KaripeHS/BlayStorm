@@ -57,8 +57,8 @@ export default function ClassroomDetail() {
   const loadClassroomData = async () => {
     try {
       const [classroomRes, analyticsRes] = await Promise.all([
-        api.get(`/teacher/classrooms/${id}`),
-        api.get(`/teacher/classrooms/${id}/analytics`),
+        api.get(`/teacher/classrooms/${id}`) as any,
+        api.get(`/teacher/classrooms/${id}/analytics`) as any,
       ]);
 
       setClassroom(classroomRes.data);

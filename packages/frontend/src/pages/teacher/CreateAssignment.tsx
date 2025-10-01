@@ -49,8 +49,8 @@ export default function CreateAssignment() {
   const loadData = async () => {
     try {
       const [classroomsRes, problemsRes] = await Promise.all([
-        api.get('/teacher/classrooms'),
-        api.get('/game/problems'),
+        api.get('/teacher/classrooms') as any,
+        api.get('/game/problems') as any,
       ]);
       setClassrooms(classroomsRes.data.filter((c: any) => c.isActive));
       setProblems(problemsRes.data);
