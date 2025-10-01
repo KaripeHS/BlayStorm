@@ -7,3 +7,4 @@ export type ChallengeStatus = 'PENDING' | 'ACTIVE' | 'COMPLETED' | 'DECLINED';
 export type FurnitureCategory = 'FLOOR' | 'WALL' | 'FURNITURE' | 'DECORATION' | 'LIGHTING' | 'SPECIAL';
 export type QuestType = 'DAILY' | 'WEEKLY' | 'SEASONAL' | 'ACHIEVEMENT';
 export type QuestDifficulty = 'EASY' | 'MEDIUM' | 'HARD';
+export type ItemRarity = 'COMMON' | 'UNCOMMON' | 'RARE' | 'EPIC' | 'LEGENDARY' | 'MYTHIC';

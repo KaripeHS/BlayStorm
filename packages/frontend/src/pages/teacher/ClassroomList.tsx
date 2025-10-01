@@ -27,7 +27,7 @@ export default function ClassroomList() {
 
   const loadClassrooms = async () => {
     try {
-      const res = await api.get('/teacher/classrooms');
+      const res: any = await api.get('/teacher/classrooms');
       setClassrooms(res.data);
     } catch (error) {
       console.error('Failed to load classrooms:', error);

@@ -89,7 +89,7 @@ export default function CreateAssignment() {
         allowLateSubmissions: formData.allowLateSubmissions,
       };
 
-      const res = await api.post(`/teacher/classrooms/${formData.classroomId}/assignments`, payload);
+      const res: any = await api.post(`/teacher/classrooms/${formData.classroomId}/assignments`, payload);
 
       // Ask if teacher wants to publish now
       const shouldPublish = confirm('Assignment created! Would you like to publish it now to students?');

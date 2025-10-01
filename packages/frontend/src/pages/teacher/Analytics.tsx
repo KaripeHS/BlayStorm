@@ -27,13 +27,13 @@ export default function Analytics() {
 
   const loadAnalytics = async () => {
     try {
-      const res = await api.get('/teacher/classrooms');
+      const res: any = await api.get('/teacher/classrooms');
       const classroomData = res.data;
 
       // Load analytics for each classroom
       const analyticsPromises = classroomData.map(async (classroom: any) => {
         try {
-          const analyticsRes = await api.get(`/teacher/classrooms/${classroom.id}/analytics`);
+          const analyticsRes: any = await api.get(`/teacher/classrooms/${classroom.id}/analytics`);
           return {
             classroom,
             ...analyticsRes.data,

@@ -6,7 +6,8 @@ import type {
   ChallengeStatus,
   FurnitureCategory,
   QuestType,
-  QuestDifficulty
+  QuestDifficulty,
+  ItemRarity
 } from '../../types/engagement';
 
 // ========================================
@@ -21,12 +22,14 @@ export interface Quest {
   difficulty: QuestDifficulty;
   targetValue: number;
   currentProgress: number;
-  progress: number;
-  target: number;
+  progress?: number;
+  target?: number;
   coinReward: number;
   xpReward: number;
   gemReward: number;
-  isClaimed: boolean;
+  isClaimed?: boolean;
+  completedAt?: Date;
+  claimedAt?: Date;
   expiresAt: Date;
 }
 
@@ -36,17 +39,19 @@ export interface Pet {
   emoji: string;
   level: number;
   xp: number;
-  currentXp: number;
+  currentXp?: number;
   xpToNextLevel: number;
-  xpForNextLevel: number;
+  xpForNextLevel?: number;
   happiness: number;
   imageUrl: string;
   baseAbility: string;
   abilityValue: number;
-  bonusType: string;
-  bonusValue: number;
+  bonusType?: string;
+  bonusValue?: number;
   lastFed?: Date;
+  lastFedAt?: Date;
   lastPlayed?: Date;
+  lastPlayedAt?: Date;
 }
 
 export interface ComboData {
@@ -60,7 +65,7 @@ export interface AvatarItem {
   id: string;
   name: string;
   category: ItemCategory;
-  rarity: string;
+  rarity: ItemRarity;
   imageUrl: string;
   coinsCost: number;
   gemsCost: number;
@@ -75,7 +80,7 @@ export interface ShopItem {
   description: string;
   category: ShopItemCategory;
   type: ShopItemCategory;
-  rarity: string;
+  rarity: ItemRarity;
   imageUrl: string;
   coinsCost: number;
   gemsCost: number;
@@ -177,7 +182,7 @@ export interface FurnitureItem {
   id: string;
   name: string;
   category: FurnitureCategory;
-  rarity: string;
+  rarity: ItemRarity;
   imageUrl: string;
   coinsCost: number;
   gemsCost: number;

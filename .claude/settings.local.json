@@ -10,7 +10,12 @@
       "Bash(git remote add:*)",
       "Bash(git branch:*)",
       "Bash(git push:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(find:*)",
+      "Bash(git checkout:*)",
+      "Bash(for file in *.tsx)",
+      "Bash(do sed:*)",
+      "Bash(done)"
     ],
     "deny": [],
     "ask": []

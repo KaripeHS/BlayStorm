@@ -26,7 +26,7 @@ export default function CreateClassroom() {
         studentLimit: formData.studentLimit ? parseInt(formData.studentLimit) : undefined,
       };
 
-      const res = await api.post('/teacher/classrooms', payload);
+      const res: any = await api.post('/teacher/classrooms', payload);
       navigate(`/teacher/classrooms/${res.data.id}`);
     } catch (error: any) {
       console.error('Failed to create classroom:', error);

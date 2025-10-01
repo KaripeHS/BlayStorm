@@ -31,19 +31,28 @@ interface Chapter {
 
 interface StoryMapProps {
   worlds: World[];
-  selectedWorld: World | null;
-  chapters: Chapter[];
-  onSelectWorld: (world: World) => void;
-  onStartChapter: (chapterId: string) => void;
+  selectedWorld?: World | null;
+  chapters?: Chapter[];
+  onSelectWorld?: (world: World) => void;
+  onSelectChapter?: (chapterId: string) => Promise<void>;
+  onStartChapter?: (chapterId: string) => void;
 }
 
 export const StoryMap: React.FC<StoryMapProps> = ({
   worlds,
   selectedWorld,
-  chapters,
+  chapters = [],
   onSelectWorld,
+  onSelectChapter,
   onStartChapter,
 }) => {
+  const handleChapterClick = (chapterId: string) => {
+    if (onSelectChapter) {
+      onSelectChapter(chapterId);
+    } else if (onStartChapter) {
+      onStartChapter(chapterId);
+    }
+  };
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-black p-8">
       <div className="max-w-7xl mx-auto">
