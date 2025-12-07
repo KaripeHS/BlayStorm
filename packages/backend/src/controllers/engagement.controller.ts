@@ -67,9 +67,9 @@ export const equipAvatarItem = async (req: Request, res: Response, next: NextFun
 export const unequipAvatarItem = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const studentId = req.user!.studentProfile!.id;
-    const { category } = req.body;
+    const { itemId } = req.body;
 
-    const result = await avatarService.unequipItem(studentId, category);
+    const result = await avatarService.unequipItem(studentId, itemId);
     res.json(result);
   } catch (error) {
     next(error);
@@ -90,13 +90,12 @@ export const getCurrentAvatar = async (req: Request, res: Response, next: NextFu
 
 export const getAvailablePets = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const studentId = req.user!.studentProfile!.id;
     const { rarity, minLevel } = req.query;
 
-    const pets = await petService.getAvailablePets(studentId, {
-      rarity: rarity as any,
-      minLevel: minLevel ? parseInt(minLevel as string) : undefined,
-    });
+    const pets = await petService.getAvailablePets(
+      minLevel ? parseInt(minLevel as string) : undefined,
+      rarity as any
+    );
 
     res.json(pets);
   } catch (error) {
@@ -232,8 +231,9 @@ export const getTopCombos = async (req: Request, res: Response, next: NextFuncti
 
 export const getAvailableBosses = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const studentId = req.user!.studentProfile!.id;
-    const bosses = await bossService.getAvailableBosses(studentId);
+    const gradeLevel = req.user!.studentProfile!.gradeLevel;
+    const studentLevel = req.user!.studentProfile!.currentLevel;
+    const bosses = await bossService.getAvailableBosses(gradeLevel, studentLevel);
     res.json(bosses);
   } catch (error) {
     next(error);
@@ -516,7 +516,8 @@ export const createChallenge = async (req: Request, res: Response, next: NextFun
 export const acceptChallenge = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { challengeId } = req.params;
-    const result = await challengeService.acceptChallenge(challengeId);
+    const studentId = req.user!.studentProfile!.id;
+    const result = await challengeService.acceptChallenge(challengeId, studentId);
     res.json(result);
   } catch (error) {
     next(error);
@@ -574,7 +575,7 @@ export const getPlayerRank = async (req: Request, res: Response, next: NextFunct
 export const getBattlePass = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const studentId = req.user!.studentProfile!.id;
-    const battlePass = await battlePassService.getCurrentPass(studentId);
+    const battlePass = await battlePassService.getBattlePassProgress(studentId);
     res.json(battlePass);
   } catch (error) {
     next(error);
