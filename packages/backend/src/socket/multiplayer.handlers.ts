@@ -330,9 +330,28 @@ export function setupMultiplayerHandlers(io: SocketServer, socket: Socket) {
         return;
       }
 
-      // TODO: Check answer, award points, update player score
+      // Get the problem to check the answer
+      const problem = await prisma.problem.findUnique({
+        where: { id: problemId },
+      });
 
-      const isCorrect = true; // Placeholder
+      if (!problem) {
+        callback({ success: false, message: 'Problem not found' });
+        return;
+      }
+
+      // Normalize and compare answers
+      const normalizeAnswer = (ans: string) => ans.toString().trim().toLowerCase().replace(/\s+/g, '');
+      const isCorrect = normalizeAnswer(answer) === normalizeAnswer(problem.answer);
+
+      // Calculate points based on correctness, time, and difficulty
+      let pointsEarned = 0;
+      if (isCorrect) {
+        const basePoints = 100;
+        const difficultyMultiplier = 1 + (problem.difficulty - 1) * 0.25; // 1.0 to 2.0
+        const timeBonus = Math.max(0, 30 - Math.floor(timeSpent / 1000)) * 2; // Up to 60 bonus points for fast answers
+        pointsEarned = Math.round(basePoints * difficultyMultiplier + timeBonus);
+      }
 
       // Update player score
       await prisma.multiplayerPlayer.updateMany({
@@ -341,19 +360,55 @@ export function setupMultiplayerHandlers(io: SocketServer, socket: Socket) {
           studentId: student.id,
         },
         data: {
-          score: { increment: isCorrect ? 100 : 0 },
-          problemsSolved: { increment: 1 },
+          score: { increment: pointsEarned },
+          problemsSolved: { increment: isCorrect ? 1 : 0 },
         },
       });
 
-      // Notify all players
+      // Get session to check mode for team scoring
+      const session = await prisma.multiplayerSession.findUnique({
+        where: { roomCode },
+      });
+
+      // Update team score for cooperative modes
+      if (session && ['COOP_QUEST', 'TEAM_VS_TEAM'].includes(session.mode)) {
+        await prisma.multiplayerSession.update({
+          where: { roomCode },
+          data: { teamScore: { increment: pointsEarned } },
+        });
+      }
+
+      // Get updated leaderboard for the room
+      const players = await prisma.multiplayerPlayer.findMany({
+        where: { session: { roomCode } },
+        orderBy: { score: 'desc' },
+        include: {
+          student: {
+            include: {
+              user: { include: { profile: true } },
+            },
+          },
+        },
+      });
+
+      const leaderboard = players.map((p, index) => ({
+        rank: index + 1,
+        studentId: p.studentId,
+        displayName: p.student.user.profile?.displayName || 'Unknown',
+        score: p.score,
+        problemsSolved: p.problemsSolved,
+      }));
+
+      // Notify all players with updated leaderboard
       io.to(roomCode).emit('game:player-answered', {
         studentId: student.id,
         isCorrect,
+        pointsEarned,
         timeSpent,
+        leaderboard,
       });
 
-      callback({ success: true, isCorrect });
+      callback({ success: true, isCorrect, pointsEarned, correctAnswer: isCorrect ? null : problem.answer });
     } catch (error) {
       logger.error('Error submitting answer:', error);
       callback({ success: false, message: 'Failed to submit answer' });

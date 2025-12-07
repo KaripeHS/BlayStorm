@@ -520,6 +520,85 @@ export class GuildService {
       memberCount: guild._count.members,
     }));
   }
+
+  /**
+   * Get guild chat history
+   */
+  async getGuildMessages(guildId: string, limit: number = 50, before?: Date) {
+    const where: any = { guildId, isDeleted: false };
+
+    if (before) {
+      where.createdAt = { lt: before };
+    }
+
+    const messages = await prisma.guildMessage.findMany({
+      where,
+      orderBy: { createdAt: 'desc' },
+      take: limit,
+    });
+
+    // Get user info for all senders
+    const senderIds = [...new Set(messages.map((m) => m.senderId))];
+    const profiles = await prisma.profile.findMany({
+      where: { userId: { in: senderIds } },
+      select: {
+        userId: true,
+        displayName: true,
+        avatarUrl: true,
+      },
+    });
+
+    const profileMap = new Map(profiles.map((p) => [p.userId, p]));
+
+    return messages.reverse().map((message) => {
+      const profile = profileMap.get(message.senderId);
+      return {
+        id: message.id,
+        guildId: message.guildId,
+        senderId: message.senderId,
+        senderName: profile?.displayName || 'Unknown',
+        senderAvatar: profile?.avatarUrl,
+        content: message.content,
+        messageType: message.messageType,
+        createdAt: message.createdAt,
+      };
+    });
+  }
+
+  /**
+   * Delete guild message (soft delete)
+   */
+  async deleteGuildMessage(messageId: string, requesterId: string) {
+    const message = await prisma.guildMessage.findUnique({
+      where: { id: messageId },
+    });
+
+    if (!message) {
+      throw new Error('Message not found');
+    }
+
+    // Check if requester is the sender or a guild leader/officer
+    const member = await prisma.guildMember.findFirst({
+      where: {
+        guildId: message.guildId,
+        student: { userId: requesterId },
+      },
+    });
+
+    const isSender = message.senderId === requesterId;
+    const isModeratorOrLeader = member && ['LEADER', 'OFFICER'].includes(member.role);
+
+    if (!isSender && !isModeratorOrLeader) {
+      throw new Error('Not authorized to delete this message');
+    }
+
+    await prisma.guildMessage.update({
+      where: { id: messageId },
+      data: { isDeleted: true },
+    });
+
+    return true;
+  }
 }
 
 export default new GuildService();

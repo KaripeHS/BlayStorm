@@ -1603,6 +1603,7 @@ model Guild {
 
   members           GuildMember[]
   events            GuildEvent[]
+  messages          GuildMessage[]
 
   @@index([name])
   @@index([isPublic])
@@ -1798,6 +1799,8 @@ model BattlePass {
 
   createdAt         DateTime @default(now())
 
+  claimedRewards    ClaimedReward[]
+
   @@index([isCurrent])
   @@map("battle_passes")
 }
@@ -1868,11 +1871,14 @@ model Event {
 
   requirements      Json?
   rewards           Json
+  targetValue       Int?
 
   isActive          Boolean  @default(true)
   isFeatured        Boolean  @default(false)
 
   createdAt         DateTime @default(now())
+
+  participations    EventParticipation[]
 
   @@index([isActive])
   @@index([startDate])
@@ -1979,4 +1985,106 @@ enum NotificationType {
   DAILY_REMINDER
   REWARD_CLAIMED
   SYSTEM
+}
+
+// ============================================
+// GUILD CHAT MESSAGES
+// ============================================
+
+model GuildMessage {
+  id                String   @id @default(cuid())
+  guildId           String
+  senderId          String
+
+  content           String   @db.Text
+  messageType       MessageType @default(TEXT)
+
+  isModerated       Boolean  @default(false)
+  isFlagged         Boolean  @default(false)
+  isDeleted         Boolean  @default(false)
+
+  createdAt         DateTime @default(now())
+  editedAt          DateTime?
+
+  guild             Guild    @relation(fields: [guildId], references: [id], onDelete: Cascade)
+
+  @@index([guildId])
+  @@index([senderId])
+  @@index([createdAt])
+  @@map("guild_messages")
+}
+
+// ============================================
+// EVENT PARTICIPATION TRACKING
+// ============================================
+
+model EventParticipation {
+  id                String   @id @default(cuid())
+  eventId           String
+  studentId         String
+
+  progress          Int      @default(0)
+  targetProgress    Int
+  isCompleted       Boolean  @default(false)
+
+  rewardsClaimed    Boolean  @default(false)
+  claimedAt         DateTime?
+
+  joinedAt          DateTime @default(now())
+  completedAt       DateTime?
+  lastUpdatedAt     DateTime @default(now())
+
+  metadata          Json?
+
+  event             Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, studentId])
+  @@index([eventId])
+  @@index([studentId])
+  @@map("event_participations")
+}
+
+// ============================================
+// BATTLE PASS REWARD CLAIMS
+// ============================================
+
+model ClaimedReward {
+  id                String   @id @default(cuid())
+  studentId         String
+  battlePassId      String
+
+  level             Int
+  track             String   // 'free' or 'premium'
+  rewardData        Json
+
+  claimedAt         DateTime @default(now())
+
+  battlePass        BattlePass @relation(fields: [battlePassId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, battlePassId, level, track])
+  @@index([studentId])
+  @@index([battlePassId])
+  @@map("claimed_rewards")
+}
+
+// ============================================
+// PUSH NOTIFICATION TOKENS
+// ============================================
+
+model PushToken {
+  id                String   @id @default(cuid())
+  userId            String
+
+  token             String   @unique
+  platform          String   // 'web', 'ios', 'android'
+  deviceInfo        Json?
+
+  isActive          Boolean  @default(true)
+
+  createdAt         DateTime @default(now())
+  lastUsedAt        DateTime @default(now())
+
+  @@index([userId])
+  @@index([token])
+  @@map("push_tokens")
 }

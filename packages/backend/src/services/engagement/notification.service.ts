@@ -1,4 +1,5 @@
 import { PrismaClient, NotificationType } from '@prisma/client';
+import pushService from '../push/push.service';
 
 const prisma = new PrismaClient();
 
@@ -166,9 +167,20 @@ export class NotificationService {
    * Send push notification (placeholder for push service integration)
    */
   private async sendPushNotification(userId: string, notification: any) {
-    // TODO: Integrate with push notification service (Firebase, OneSignal, etc.)
-    // For now, this is a placeholder - push notifications will be implemented later
-    console.log('Push notification placeholder for user:', userId, 'notification:', notification.title);
+    try {
+      await pushService.sendToUser(userId, {
+        title: notification.title,
+        body: notification.message,
+        icon: notification.imageUrl,
+        data: {
+          notificationId: notification.id,
+          type: notification.type,
+          actionUrl: notification.actionUrl,
+        },
+      });
+    } catch (error) {
+      console.error('Failed to send push notification:', error);
+    }
   }
 
   /**

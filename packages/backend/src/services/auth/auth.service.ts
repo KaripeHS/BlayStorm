@@ -4,6 +4,7 @@ import jwt from 'jsonwebtoken';
 import { prisma } from '../../server';
 import { UnauthorizedError, ValidationError, ConflictError } from '../../utils/errors';
 import { isValidEmail, sanitizeUsername } from '../../utils/helpers';
+import emailService from '../email/email.service';
 import { UserRole } from '@prisma/client';
 
 export interface RegisterData {
@@ -281,7 +282,18 @@ export class AuthService {
       },
     });
 
-    // TODO: Send email with reset token
+    // Get user profile for personalized email
+    const profile = await prisma.profile.findUnique({
+      where: { userId: user.id },
+      select: { displayName: true },
+    });
+
+    // Send password reset email
+    await emailService.sendPasswordResetEmail(
+      user.email,
+      resetToken,
+      profile?.displayName
+    );
 
     return { message: 'If the email exists, a reset link has been sent' };
   }

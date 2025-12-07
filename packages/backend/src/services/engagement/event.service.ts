@@ -83,25 +83,15 @@ export class EventService {
   }
 
   /**
-   * Participate in event (track progress)
+   * Join an event (initialize participation)
    */
-  async participateInEvent(studentId: string, eventId: string, progress: any) {
-    // TODO: Need EventParticipation table to track progress
-    // For now, just verify eligibility
-
+  async joinEvent(studentId: string, eventId: string) {
     const isEligible = await this.checkEligibility(studentId, eventId);
 
     if (!isEligible) {
       throw new Error('Not eligible for this event');
     }
 
-    return { success: true, progress };
-  }
-
-  /**
-   * Claim event rewards
-   */
-  async claimEventRewards(studentId: string, eventId: string) {
     const event = await prisma.event.findUnique({
       where: { id: eventId },
     });
@@ -110,7 +100,135 @@ export class EventService {
       throw new Error('Event not found');
     }
 
-    // TODO: Check if completed and not already claimed
+    // Check if already participating
+    const existing = await prisma.eventParticipation.findUnique({
+      where: {
+        eventId_studentId: { eventId, studentId },
+      },
+    });
+
+    if (existing) {
+      return existing;
+    }
+
+    // Create participation record
+    const participation = await prisma.eventParticipation.create({
+      data: {
+        eventId,
+        studentId,
+        progress: 0,
+        targetProgress: event.targetValue || 100,
+        isCompleted: false,
+        rewardsClaimed: false,
+      },
+    });
+
+    return participation;
+  }
+
+  /**
+   * Update event progress
+   */
+  async updateEventProgress(studentId: string, eventId: string, progressIncrement: number) {
+    const participation = await prisma.eventParticipation.findUnique({
+      where: {
+        eventId_studentId: { eventId, studentId },
+      },
+    });
+
+    if (!participation) {
+      // Auto-join if not participating
+      await this.joinEvent(studentId, eventId);
+      return this.updateEventProgress(studentId, eventId, progressIncrement);
+    }
+
+    if (participation.isCompleted) {
+      return participation;
+    }
+
+    const newProgress = Math.min(participation.progress + progressIncrement, participation.targetProgress);
+    const isCompleted = newProgress >= participation.targetProgress;
+
+    const updated = await prisma.eventParticipation.update({
+      where: { id: participation.id },
+      data: {
+        progress: newProgress,
+        isCompleted,
+        completedAt: isCompleted ? new Date() : null,
+        lastUpdatedAt: new Date(),
+      },
+    });
+
+    // Notify if completed
+    if (isCompleted && !participation.isCompleted) {
+      const event = await prisma.event.findUnique({ where: { id: eventId } });
+      await prisma.notification.create({
+        data: {
+          userId: studentId,
+          type: 'QUEST_COMPLETE',
+          title: 'Event Completed!',
+          message: `You completed ${event?.name || 'the event'}! Claim your rewards!`,
+          actionUrl: '/events',
+        },
+      });
+    }
+
+    return updated;
+  }
+
+  /**
+   * Get student's event participation
+   */
+  async getEventParticipation(studentId: string, eventId: string) {
+    return prisma.eventParticipation.findUnique({
+      where: {
+        eventId_studentId: { eventId, studentId },
+      },
+      include: {
+        event: true,
+      },
+    });
+  }
+
+  /**
+   * Get all event participations for a student
+   */
+  async getStudentEventParticipations(studentId: string) {
+    return prisma.eventParticipation.findMany({
+      where: { studentId },
+      include: {
+        event: true,
+      },
+      orderBy: { joinedAt: 'desc' },
+    });
+  }
+
+  /**
+   * Claim event rewards
+   */
+  async claimEventRewards(studentId: string, eventId: string) {
+    const [event, participation] = await Promise.all([
+      prisma.event.findUnique({ where: { id: eventId } }),
+      prisma.eventParticipation.findUnique({
+        where: { eventId_studentId: { eventId, studentId } },
+      }),
+    ]);
+
+    if (!event) {
+      throw new Error('Event not found');
+    }
+
+    if (!participation) {
+      throw new Error('You have not participated in this event');
+    }
+
+    if (!participation.isCompleted) {
+      throw new Error('Event not completed yet');
+    }
+
+    if (participation.rewardsClaimed) {
+      throw new Error('Rewards already claimed');
+    }
 
     const rewards = event.rewards as any;
 
@@ -148,6 +266,15 @@ export class EventService {
           },
         });
       }
+
+      // Mark rewards as claimed
+      await tx.eventParticipation.update({
+        where: { id: participation.id },
+        data: {
+          rewardsClaimed: true,
+          claimedAt: new Date(),
+        },
+      });
     });
 
     // Notify

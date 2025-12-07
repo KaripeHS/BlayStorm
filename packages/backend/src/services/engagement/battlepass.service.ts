@@ -146,10 +146,37 @@ export class BattlePassService {
       throw new Error('Reward not found');
     }
 
-    // TODO: Check if already claimed (need ClaimedReward table)
+    // Check if already claimed
+    const alreadyClaimed = await prisma.claimedReward.findUnique({
+      where: {
+        studentId_battlePassId_level_track: {
+          studentId,
+          battlePassId: battlePass.id,
+          level,
+          track,
+        },
+      },
+    });
 
-    // Award rewards
-    await this.awardRewards(studentId, reward);
+    if (alreadyClaimed) {
+      throw new Error('Reward already claimed');
+    }
+
+    // Award rewards and record claim
+    await prisma.$transaction(async (tx) => {
+      await this.awardRewards(studentId, reward, tx);
+
+      // Record the claimed reward
+      await tx.claimedReward.create({
+        data: {
+          studentId,
+          battlePassId: battlePass.id,
+          level,
+          track,
+          rewardData: reward,
+        },
+      });
+    });
 
     return reward;
   }
@@ -175,13 +202,28 @@ export class BattlePassService {
       return [];
     }
 
+    // Get already claimed rewards
+    const claimedRewards = await prisma.claimedReward.findMany({
+      where: {
+        studentId,
+        battlePassId: battlePass.id,
+      },
+      select: {
+        level: true,
+        track: true,
+      },
+    });
+
+    const claimedSet = new Set(claimedRewards.map((r) => `${r.level}-${r.track}`));
+
     const rewards = battlePass.rewards as any;
 
     // Filter rewards that are unlocked but not claimed
     const unclaimed = rewards.filter((r: any) => {
       if (r.level > student.battlePassLevel) return false;
       if (r.track === 'premium' && !student.isPremiumPass) return false;
-      // TODO: Check if claimed (need ClaimedReward table)
+      // Check if already claimed
+      if (claimedSet.has(`${r.level}-${r.track}`)) return false;
       return true;
     });
 
@@ -234,66 +276,66 @@ export class BattlePassService {
   /**
    * Award rewards based on reward data
    */
-  private async awardRewards(studentId: string, reward: any) {
-    await prisma.$transaction(async (tx) => {
-      if (reward.coins) {
-        await tx.studentProfile.update({
-          where: { id: studentId },
-          data: { coins: { increment: reward.coins } },
-        });
-      }
+  private async awardRewards(studentId: string, reward: any, tx?: any) {
+    const db = tx || prisma;
 
-      if (reward.gems) {
-        await tx.studentProfile.update({
-          where: { id: studentId },
-          data: { gems: { increment: reward.gems } },
-        });
-      }
+    if (reward.coins) {
+      await db.studentProfile.update({
+        where: { id: studentId },
+        data: { coins: { increment: reward.coins } },
+      });
+    }
 
-      if (reward.xp) {
-        await tx.studentProfile.update({
-          where: { id: studentId },
-          data: { totalXp: { increment: reward.xp } },
-        });
-      }
+    if (reward.gems) {
+      await db.studentProfile.update({
+        where: { id: studentId },
+        data: { gems: { increment: reward.gems } },
+      });
+    }
 
-      // Award items (avatars, pets, etc.)
-      if (reward.items) {
-        for (const item of reward.items) {
-          if (item.type === 'avatar') {
-            await tx.studentAvatar.upsert({
-              where: {
-                studentId_avatarItemId: {
-                  studentId,
-                  avatarItemId: item.id,
-                },
-              },
-              create: {
+    if (reward.xp) {
+      await db.studentProfile.update({
+        where: { id: studentId },
+        data: { totalXp: { increment: reward.xp } },
+      });
+    }
+
+    // Award items (avatars, pets, etc.)
+    if (reward.items) {
+      for (const item of reward.items) {
+        if (item.type === 'avatar') {
+          await db.studentAvatar.upsert({
+            where: {
+              studentId_avatarItemId: {
                 studentId,
                 avatarItemId: item.id,
-                isPurchased: false,
               },
-              update: {},
-            });
-          } else if (item.type === 'pet') {
-            await tx.studentPet.upsert({
-              where: {
-                studentId_petId: {
-                  studentId,
-                  petId: item.id,
-                },
-              },
-              create: {
+            },
+            create: {
+              studentId,
+              avatarItemId: item.id,
+              isPurchased: false,
+            },
+            update: {},
+          });
+        } else if (item.type === 'pet') {
+          await db.studentPet.upsert({
+            where: {
+              studentId_petId: {
                 studentId,
                 petId: item.id,
-                happiness: 100,
               },
-              update: {},
-            });
-          }
+            },
+            create: {
+              studentId,
+              petId: item.id,
+              happiness: 100,
+            },
+            update: {},
+          });
         }
       }
-    });
+    }
   }
 
   /**

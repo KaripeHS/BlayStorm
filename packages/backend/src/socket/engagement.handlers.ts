@@ -1,5 +1,8 @@
 import { Server as SocketServer, Socket } from 'socket.io';
+import { PrismaClient } from '@prisma/client';
 import { logger } from '../utils/logger';
+
+const prisma = new PrismaClient();
 
 /**
  * Setup engagement-related socket handlers
@@ -93,18 +96,51 @@ export function setupEngagementHandlers(io: SocketServer, socket: Socket) {
   socket.on('guild:message', async (data: { guildId: string; message: string }) => {
     const { guildId, message } = data;
 
-    // TODO: Save message to database
-    // TODO: Get user info
+    try {
+      // Get user info for the message
+      const studentProfile = await prisma.studentProfile.findUnique({
+        where: { userId },
+        include: {
+          user: {
+            include: {
+              profile: true,
+            },
+          },
+        },
+      });
 
-    const messageData = {
-      id: Date.now().toString(),
-      userId,
-      message,
-      timestamp: new Date(),
-    };
+      if (!studentProfile) {
+        socket.emit('error', { message: 'User not found' });
+        return;
+      }
 
-    // Broadcast to all guild members
-    io.to(`guild:${guildId}`).emit('guild:message_received', messageData);
+      // Save message to database
+      const savedMessage = await prisma.guildMessage.create({
+        data: {
+          guildId,
+          senderId: userId,
+          content: message,
+          messageType: 'TEXT',
+        },
+      });
+
+      const messageData = {
+        id: savedMessage.id,
+        guildId,
+        senderId: userId,
+        senderName: studentProfile.user.profile?.displayName || 'Unknown',
+        senderAvatar: studentProfile.user.profile?.avatarUrl,
+        content: message,
+        messageType: 'TEXT',
+        createdAt: savedMessage.createdAt,
+      };
+
+      // Broadcast to all guild members
+      io.to(`guild:${guildId}`).emit('guild:message_received', messageData);
+    } catch (error) {
+      console.error('Failed to save guild message:', error);
+      socket.emit('error', { message: 'Failed to send message' });
+    }
   });
 
   /**
