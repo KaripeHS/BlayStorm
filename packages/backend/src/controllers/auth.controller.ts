@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import authService from '../services/auth/auth.service';
 import { AuthRequest } from '../middleware/auth.middleware';
+import { prisma } from '../server';
 
 export const register = async (req: Request, res: Response, next: NextFunction) => {
   try {

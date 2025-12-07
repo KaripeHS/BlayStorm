@@ -167,45 +167,8 @@ export class NotificationService {
    */
   private async sendPushNotification(userId: string, notification: any) {
     // TODO: Integrate with push notification service (Firebase, OneSignal, etc.)
-    // For now, this is a placeholder
-
-    const student = await prisma.studentProfile.findUnique({
-      where: { id: userId },
-      select: {
-        user: {
-          select: {
-            profile: {
-              select: {
-                pushTokens: true,
-              },
-            },
-          },
-        },
-      },
-    });
-
-    const pushTokens = student?.user.profile?.pushTokens as string[] | undefined;
-
-    if (!pushTokens || pushTokens.length === 0) {
-      return; // No push tokens
-    }
-
-    // Example push notification payload
-    const payload = {
-      title: notification.title,
-      body: notification.message,
-      data: {
-        notificationId: notification.id,
-        type: notification.type,
-        actionUrl: notification.actionUrl,
-      },
-      imageUrl: notification.imageUrl,
-    };
-
-    console.log('Would send push notification:', payload, 'to tokens:', pushTokens);
-
-    // TODO: Send to push service
-    // await pushService.sendToTokens(pushTokens, payload);
+    // For now, this is a placeholder - push notifications will be implemented later
+    console.log('Push notification placeholder for user:', userId, 'notification:', notification.title);
   }
 
   /**
@@ -368,7 +331,7 @@ export class NotificationService {
         },
         _sum: {
           problemsSolved: true,
-          correctAnswers: true,
+          problemsCorrect: true,
           xpEarned: true,
           coinsEarned: true,
         },
@@ -398,12 +361,12 @@ export class NotificationService {
     // Get student's friends
     const friendships = await prisma.friendship.findMany({
       where: {
-        OR: [{ requesterId: studentId }, { receiverId: studentId }],
+        OR: [{ studentId: studentId }, { friendId: studentId }],
         status: 'ACCEPTED',
       },
       select: {
-        requesterId: true,
-        receiverId: true,
+        studentId: true,
+        friendId: true,
       },
     });
 
@@ -419,13 +382,13 @@ export class NotificationService {
     });
 
     const friendIds = friendships.map((f) =>
-      f.requesterId === studentId ? f.receiverId : f.requesterId
+      f.studentId === studentId ? f.friendId : f.studentId
     );
 
     for (const friendId of friendIds) {
       await this.createNotification({
         userId: friendId,
-        type: 'FRIEND_ACTIVITY',
+        type: 'SYSTEM',
         title: 'Friend Achievement!',
         message: `${student?.user.profile?.displayName} just earned the "${achievementName}" achievement!`,
         imageUrl: student?.user.profile?.avatarUrl,
@@ -463,7 +426,7 @@ export class NotificationService {
 
     await this.createNotification({
       userId: studentId,
-      type: 'GUILD_INVITATION',
+      type: 'GUILD_INVITE',
       title: 'Guild Invitation',
       message: `${inviter?.user.profile?.displayName} invited you to join ${guildName}!`,
       actionUrl: '/guilds',

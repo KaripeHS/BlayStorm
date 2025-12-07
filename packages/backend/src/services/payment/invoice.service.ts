@@ -3,7 +3,7 @@ import { prisma } from '../../server';
 import { NotFoundError } from '../../utils/errors';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2024-11-20.acacia',
+  apiVersion: '2024-04-10',
 });
 
 export class InvoiceService {

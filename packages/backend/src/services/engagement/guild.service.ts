@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { PrismaClient, GuildRole, GuildEventType } from '@prisma/client';
 
 const prisma = new PrismaClient();

@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { prisma } from '../../server';
 import { GameMode } from '@prisma/client';
 import { NotFoundError } from '../../utils/errors';

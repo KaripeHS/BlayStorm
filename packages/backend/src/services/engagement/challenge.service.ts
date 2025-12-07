@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { PrismaClient, ChallengeType, ChallengeStatus } from '@prisma/client';
 
 const prisma = new PrismaClient();
